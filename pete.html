@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Animation for Mobile</title>
+    <!-- Inclure la bibliothèque p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black; /* Couleur de fond */
+        }
+        canvas {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        let words = [];
+        let allDispersed = false;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight); // Adapter le canevas à la taille de l'écran
+            background(0);
+            textAlign(CENTER, CENTER);
+            createThickHeartWithText();
+        }
+
+        function draw() {
+            background(0);
+
+            if (!allDispersed) {
+                for (let word of words) {
+                    word.update();
+                    word.draw();
+                }
+                
+                // Vérifier si tous les mots ont été dispersés
+                checkAllDispersed();
+            }
+        }
+
+        // Remplacer mouseMoved par touchMoved pour une interaction tactile
+        function touchMoved() {
+            if (!allDispersed) {
+                for (let word of words) {
+                    for (let touch of touches) { // Vérifier tous les points de contact
+                        if (word.contains(touch.x, touch.y) && !word.moving) {
+                            word.flyAway();
+                        }
+                    }
+                }
+            }
+            return false; // Empêche le scrolling sur mobile
+        }
+
+        function createThickHeartWithText() {
+            let centerX = width / 2;
+            let centerY = height / 2;
+            
+            // Dessiner un contour de cœur avec plus de densité
+            for (let t = -PI; t < PI; t += 0.03) {
+                for (let r = 18; r <= 60; r += 4) {
+                    let x = r * pow(sin(t), 3) * 10 + centerX;
+                    let y = -(13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t)) * (r / 2) + centerY;
+                    for (let i = 0; i < 3; i++) {
+                        addTextInsideHeart(x + random(-5, 5), y + random(-5, 5));
+                    }
+                }
+            }
+        }
+
+        function addTextInsideHeart(x, y) {
+            let textArray = ["I", "LOVE", "YOU", "PETE"];
+            let word = textArray[int(random(textArray.length))];
+            words.push(new SpikyHeartWord(word, x, y));
+        }
+
+        function checkAllDispersed() {
+            let dispersed = true;
+            for (let word of words) {
+                if (!word.isDispersed()) {
+                    dispersed = false;
+                    break;
+                }
+            }
+            if (dispersed) {
+                allDispersed = true;
+            }
+        }
+
+        // Classe représentant un mot "I LOVE YOU PETE"
+        class SpikyHeartWord {
+            constructor(word, x, y) {
+                this.word = word;
+                this.x = x;
+                this.y = y;
+                this.visible = true;
+                this.moving = false;
+                this.speedX = 0;
+                this.speedY = 0;
+            }
+
+            draw() {
+                if (this.visible) {
+                    fill(173, 216, 230); // Texte en bleu clair (RGB pour Light Blue)
+                    textSize(10);
+                    text(this.word, this.x, this.y);
+                }
+            }
+
+            update() {
+                if (this.moving) {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    
+                    // Si le mot sort de l'écran, on arrête de le dessiner
+                    if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+                        this.visible = false;
+                    }
+                }
+            }
+
+            flyAway() {
+                this.moving = true;
+                this.speedX = random(-6, 6); // Vitesse de dispersion rapide
+                this.speedY = random(-6, 6); // Vitesse de dispersion rapide
+            }
+
+            contains(x, y) {
+                let wordWidth = textWidth(this.word);
+                let wordHeight = 10;
+                return this.visible && x >= this.x - wordWidth / 2 && x <= this.x + wordWidth / 2 && y >= this.y - wordHeight / 2 && y <= this.y + wordHeight / 2;
+            }
+
+            isDispersed() {
+                return !this.visible;
+            }
+        }
+
+        // Adapter la taille du canevas lorsque la fenêtre change de taille
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+</body>
+</html>
